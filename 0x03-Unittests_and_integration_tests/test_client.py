@@ -103,7 +103,7 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
     """ to test the GithubOrgClient.public_repos method
     in an integration test.
     """
-    def setUpClass():
+    def setUpClass(self):
         """mock requests.get to return example payloads
         """
         get_patcher = patch('utils.requests.get')
@@ -125,7 +125,9 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
         get_mock.return_value.json.side_effect = side_effect
 
-    def tearDownClass():
+    def tearDownClass(self):
         """to stop the patcher.
         """
         get_patcher.stop()
+
+    def test_public_repos(self)
