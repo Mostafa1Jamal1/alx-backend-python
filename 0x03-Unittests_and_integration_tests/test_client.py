@@ -13,12 +13,13 @@ from utils import (
     memoize,
 )
 from client import GithubOrgClient
+from fixtures import TEST_PAYLOAD
 import unittest
 from unittest.mock import (
     patch,
     PropertyMock,
 )
-from parameterized import parameterized
+from parameterized import (parameterized, parameterized_class)
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -87,3 +88,44 @@ class TestGithubOrgClient(unittest.TestCase):
             GithubOrgClient.has_license(repo, license_key),
             expected
         )
+
+
+@parameterized_class(
+    ('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'),
+    [
+        TEST_PAYLOAD[0][0],
+        TEST_PAYLOAD[0][1],
+        TEST_PAYLOAD[0][2],
+        TEST_PAYLOAD[0][3]
+    ]
+)
+class TestIntegrationGithubOrgClient(unittest.TestCase):
+    """ to test the GithubOrgClient.public_repos method
+    in an integration test.
+    """
+    def setUpClass():
+        """mock requests.get to return example payloads
+        """
+        get_patcher = patch('utils.requests.get')
+        get_mock = get_patcher.start()
+        my_client = GithubOrgClient('google')
+
+        def side_effect(url: str) -> Any:
+            """to make sure the mock of requests.get(url).json()
+            returns the correct fixtures for the various values
+            of url that you anticipate to receive.
+            """
+            org_url = "https://api.github.com/orgs/google"
+            repos_url = self.org_payload['repos_url']
+            respond = {
+                org_url: self.org_payload,
+                repos_url: self.repos_payload
+            }
+            return respond[url]
+
+        get_mock.return_value.json.side_effect = side_effect
+
+    def tearDownClass():
+        """to stop the patcher.
+        """
+        get_patcher.stop()
